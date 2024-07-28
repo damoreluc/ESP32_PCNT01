@@ -7,6 +7,57 @@
  *    pin_ctrl_ch0  sul GPIO_NUM_12
  *
  * visualizzazione del conteggio up/down su seriale.
+ * 
+ * IMPORTANTE:
+ * la libreria mike-gofton/ESP32PulseCounter@^0.2.0 contiene due errori, pertanto è necessario 
+ * apportare due modifiche nel file  esp32_pcnt.cpp 
+ * 
+ * 1. nel metodo initialise:
+ * 
+    void PulseCounter::initialise(int PCNT_INPUT_SIG_IO, int PCNT_INPUT_CTRL_IO)
+    {
+        // save channel and pin numbers
+        sig_pin = PCNT_INPUT_SIG_IO;
+        ctrl_pin = PCNT_INPUT_CTRL_IO;
+
+        // allocate isr callback functions
+        static void ((*isr_func[COUNTER_MAX])(void *)) = {
+            unit0_isr, unit1_isr, unit2_isr, unit3_isr, unit4_isr, unit5_isr, unit6_isr, unit7_isr
+        };
+
+        //find a free pulse counter unit and allocate
+        bool counter_allocated = false;
+        for (uint8_t i = 0; i < COUNTER_MAX; i++) {
+            // test which counter is free
+            if (bitRead(counter_used,i) == 0) {
+                counter_id = (pcnt_unit_t)i; // assign a free counter
+                bitSet(counter_used,counter_id); // record in isr allocation register
+                obj_instance[counter_id] = this; // record instance object reference
+                counter_allocated = true;
+                break;
+            }
+        }
+        if (counter_allocated) {   
+            // configure counter
+            pcnt_config.unit = counter_id;
+            pcnt_config.channel = PCNT_CHANNEL_0; //only use channel 0 of each counter unit.
+            // Set signal and control inputGPIOs
+            pcnt_config.pulse_gpio_num = sig_pin;
+            pcnt_config.ctrl_gpio_num = ctrl_pin;
+            pcnt_unit_config(&pcnt_config);
+            //assign isr routine
+            pcnt_isr_service_install(0);  // <--- !!!
+            pcnt_isr_handler_add(counter_id, isr_func[counter_id], (void *)counter_id);     
+        }
+    }
+ * 
+ * 2. nel metodo instance_isr:
+ * 
+    void PulseCounter::instance_isr() {
+        // call the user isr
+        usr_isr(NULL);   // <--- !!
+    } 
+ * 
  *
  * Documentazione HW:
  * link: https://docs.espressif.com/projects/esp-idf/en/v5.2.2/esp32/api-reference/peripherals/pcnt.html
@@ -58,30 +109,6 @@ void setup()
   digitalWrite(pin_led, HIGH);
   delay(2000);
   digitalWrite(pin_led, LOW);  
-
-  // Install PCNT ISR service.
-  //err_exit_pcnt_isr = pcnt_isr_service_install(ESP_INTR_FLAG_LOWMED);
-//  err_exit_pcnt_isr = pcnt_isr_service_install(0);
-/*  // parse exit result
-  switch(err_exit_pcnt_isr) {
-    case ESP_OK:
-      Serial.println("PCNT ISR service installed");
-      break;
-    case ESP_ERR_INVALID_STATE:
-      Serial.println("pcnt driver has not been initialized");
-      break;  
-    case ESP_ERR_NO_MEM:
-      Serial.println("No memory to install this service");
-      break;   
-    case ESP_FAIL:
-      Serial.println("Generic esp_err_t code indicating failure");
-      break;       
-  }
-  
-  if(err_exit_pcnt_isr != 0) {
-    while(1){;}
-  }
-*/
 
   // setup hardware pulse counter
   // initialise counter unit 0, channel 0 with signal input GPIO pin and control signal input pin
