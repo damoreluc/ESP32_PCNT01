@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <esp32_pcnt.h>
+#include <pcnt/esp32_pcnte.h>
 /*
  * Conteggio due encoder incrementali x1 mediante modulo PCNT #0 - solo canale ch0
  *  impiego dei pin:
@@ -80,6 +80,9 @@
 // linee di input dell'encoder:
 #define pin_sig0_ch0 GPIO_NUM_16
 #define pin_ctrl0_ch0 GPIO_NUM_17
+#define pin_sig0_ch1 GPIO_NUM_17
+#define pin_ctrl0_ch1 GPIO_NUM_16
+
 #define pin_led GPIO_NUM_18
 
 #define pin_sig1_ch0 GPIO_NUM_12
@@ -127,7 +130,8 @@ void setup()
   // setup hardware pulse counter
   // initialise counter unit 0, channel 0 with signal input GPIO pin and control signal input pin
   // Note: (0 = no control signal input)
-  pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0);
+  pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0, pin_sig0_ch1, pin_ctrl0_ch1);
+  //pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0);
   // initialise counter unit 0, channel 0 with signal input GPIO pin and control signal input pin
   pc1.initialise(pin_sig1_ch0, pin_ctrl1_ch0);
 
@@ -135,7 +139,10 @@ void setup()
   // count down on negative edges when ctrl is L,
   // count down on positive edges when ctrl is H,
   // count up on positive edges when ctrl is L
-  pc0.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+  //pc0.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+  pc0.set_mode(PCNT_CHANNEL_0, PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+  pc0.set_mode(PCNT_CHANNEL_1, PCNT_COUNT_INC, PCNT_COUNT_DEC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);  
+
   pc1.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
 
   // set glich filter to ignore pulses less than 1000 x 2.5ns
