@@ -41,7 +41,7 @@ class PulseCounter
         void initialise(int PCNT_INPUT_SIG0_IO, int PCNT_INPUT_CTRL0_IO);
         void initialise(int PCNT_INPUT_SIG0_IO, int PCNT_INPUT_CTRL0_IO, int PCNT_INPUT_SIG1_IO, int PCNT_INPUT_CTRL1_IO);
         void set_mode(pcnt_count_mode_t pos_mode, pcnt_count_mode_t neg_mode, pcnt_ctrl_mode_t hctrl_mode, pcnt_ctrl_mode_t lctrl_mode);
-        void set_mode(pcnt_channel_t, pcnt_count_mode_t pos_mode, pcnt_count_mode_t neg_mode, pcnt_ctrl_mode_t hctrl_mode, pcnt_ctrl_mode_t lctrl_mode);
+        void set_mode(pcnt_channel_t channel, pcnt_count_mode_t pos_mode, pcnt_count_mode_t neg_mode, pcnt_ctrl_mode_t hctrl_mode, pcnt_ctrl_mode_t lctrl_mode);
         int16_t get_value();
         void pause();
         void resume();

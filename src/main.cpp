@@ -64,6 +64,9 @@
     } 
  * 
  *
+ * versione x4
+ *   https://github.com/espressif/esp-idf/blob/v5.2.2/examples/peripherals/pcnt/rotary_encoder/main/rotary_encoder_example_main.c
+ * 
  * Documentazione HW:
  * link: https://docs.espressif.com/projects/esp-idf/en/v5.2.2/esp32/api-reference/peripherals/pcnt.html
  *
