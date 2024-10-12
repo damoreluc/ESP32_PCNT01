@@ -92,9 +92,9 @@
 #define pin_ctrl1_ch0 GPIO_NUM_14
 
 // counter threshold
-#define threshold_0 10
-#define threshold_1 20
-#define high_limit 30
+#define threshold_0 36
+#define threshold_1 72
+#define high_limit 3600
 
 // create counter objects
 PulseCounter pc0, pc1;
