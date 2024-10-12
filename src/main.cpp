@@ -6,19 +6,19 @@
  *   Encoder 0:
  *    pin_sig0_ch0   sul GPIO_NUM_16
  *    pin_ctrl0_ch0  sul GPIO_NUM_17
- * 
+ *
  *   Encoder 1:
  *    pin_sig1_ch0   sul GPIO_NUM_12
  *    pin_ctrl1_ch0  sul GPIO_NUM_14
  *
  * visualizzazione del conteggio up/down su seriale.
- * 
+ *
  * IMPORTANTE:
- * la libreria mike-gofton/ESP32PulseCounter@^0.2.0 contiene due errori, pertanto è necessario 
- * apportare due modifiche nel file  esp32_pcnt.cpp 
- * 
+ * la libreria mike-gofton/ESP32PulseCounter@^0.2.0 contiene due errori, pertanto è necessario
+ * apportare due modifiche nel file  esp32_pcnt.cpp
+ *
  * 1. nel metodo initialise:
- * 
+ *
     void PulseCounter::initialise(int PCNT_INPUT_SIG_IO, int PCNT_INPUT_CTRL_IO)
     {
         // save channel and pin numbers
@@ -42,7 +42,7 @@
                 break;
             }
         }
-        if (counter_allocated) {   
+        if (counter_allocated) {
             // configure counter
             pcnt_config.unit = counter_id;
             pcnt_config.channel = PCNT_CHANNEL_0; //only use channel 0 of each counter unit.
@@ -52,21 +52,21 @@
             pcnt_unit_config(&pcnt_config);
             //assign isr routine
             pcnt_isr_service_install(0);  // <--- !!!
-            pcnt_isr_handler_add(counter_id, isr_func[counter_id], (void *)counter_id);     
+            pcnt_isr_handler_add(counter_id, isr_func[counter_id], (void *)counter_id);
         }
     }
- * 
+ *
  * 2. nel metodo instance_isr:
- * 
+ *
     void PulseCounter::instance_isr() {
         // call the user isr
         usr_isr(NULL);   // <--- !!
-    } 
- * 
+    }
+ *
  *
  * versione x4
  *   https://github.com/espressif/esp-idf/blob/v5.2.2/examples/peripherals/pcnt/rotary_encoder/main/rotary_encoder_example_main.c
- * 
+ *
  * Documentazione HW:
  * link: https://docs.espressif.com/projects/esp-idf/en/v5.2.2/esp32/api-reference/peripherals/pcnt.html
  *
@@ -128,23 +128,23 @@ void setup()
 
   digitalWrite(pin_led, HIGH);
   delay(2000);
-  digitalWrite(pin_led, LOW);  
+  digitalWrite(pin_led, LOW);
 
   // setup hardware pulse counter
   // initialise counter unit 0, channel 0 with signal input GPIO pin and control signal input pin
   // Note: (0 = no control signal input)
   pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0, pin_sig0_ch1, pin_ctrl0_ch1);
-  //pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0);
-  // initialise counter unit 0, channel 0 with signal input GPIO pin and control signal input pin
+  // pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0);
+  //  initialise counter unit 0, channel 0 with signal input GPIO pin and control signal input pin
   pc1.initialise(pin_sig1_ch0, pin_ctrl1_ch0);
 
   // count up on negative edges when ctrl is H,
   // count down on negative edges when ctrl is L,
   // count down on positive edges when ctrl is H,
   // count up on positive edges when ctrl is L
-  //pc0.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+  // pc0.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
   pc0.set_mode(PCNT_CHANNEL_0, PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
-  pc0.set_mode(PCNT_CHANNEL_1, PCNT_COUNT_INC, PCNT_COUNT_DEC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);  
+  pc0.set_mode(PCNT_CHANNEL_1, PCNT_COUNT_INC, PCNT_COUNT_DEC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
 
   pc1.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
 
@@ -161,15 +161,15 @@ void setup()
 
   pc1.set_event_value(PCNT_EVT_THRES_0, threshold_0);
   pc1.set_event_value(PCNT_EVT_THRES_1, threshold_1);
-  pc1.set_event_value(PCNT_EVT_H_LIM, high_limit);  
+  pc1.set_event_value(PCNT_EVT_H_LIM, high_limit);
 
   // register interrupt service routine for this counter unit
   pc0.attach_interrupt(pc0_isr);
   pc1.attach_interrupt(pc1_isr);
 
   // show isr pointer
-  //Serial.printf("Pointer to pc0_isr: %p\n", pc0_isr);
-  //while(1);
+  // Serial.printf("Pointer to pc0_isr: %p\n", pc0_isr);
+  // while(1);
 
   pc0.interrupt_enable();
   pc1.interrupt_enable();
@@ -185,8 +185,15 @@ void setup()
 
 void loop()
 {
-  Serial.printf("Enc #0, Count: %d\t event status: %d\t", pc0.get_value(), pc0.event_status());
-  Serial.printf("Enc #1, Count: %d\t event status: %d\n", pc1.get_value(), pc1.event_status());
+  static unsigned long tPrev = millis();
+
+  if (millis() > tPrev + 100)
+  {
+    tPrev = millis();
+    Serial.printf("Enc #0, Count: %d\t event status: %d\t", pc0.get_value(), pc0.event_status());
+    Serial.printf("Enc #1, Count: %d\t event status: %d\n", pc1.get_value(), pc1.event_status());
+  }
+
   if (pc0_int_flag)
   {
     pc0_int_flag = false;
@@ -207,7 +214,7 @@ void loop()
     }
   }
 
-if (pc1_int_flag)
+  if (pc1_int_flag)
   {
     pc1_int_flag = false;
     Serial.print("pc1 event: ");
@@ -226,7 +233,7 @@ if (pc1_int_flag)
       break;
     }
   }
-  delay(50);
+ // delay(50);
 }
 
 // pulse counter #0 ISR
@@ -244,8 +251,8 @@ IRAM_ATTR void pc0_isr(void *)
 // pulse counter #1 ISR
 IRAM_ATTR void pc1_isr(void *)
 {
-  //digitalWrite(pin_led, HIGH);
-  // Prevent context switching during the interrupt service routine with an ISR spinlock
+  // digitalWrite(pin_led, HIGH);
+  //  Prevent context switching during the interrupt service routine with an ISR spinlock
   portENTER_CRITICAL_ISR(&pcntMux1);
   // set interrupt flag
   pc1_int_flag = true;
