@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <pcnt/esp32_pcnte.h>
+#include <Bounce2.h>
 /*
  * Conteggio due encoder incrementali x1 mediante modulo PCNT #0 - solo canale ch0
  *  impiego dei pin:
@@ -88,13 +89,15 @@
 
 #define pin_led GPIO_NUM_18
 
-#define pin_sig1_ch0 GPIO_NUM_12
-#define pin_ctrl1_ch0 GPIO_NUM_14
+#define pin_sig1_ch0 GPIO_NUM_26
+#define pin_ctrl1_ch0 GPIO_NUM_27
+#define pin_sig1_ch1 GPIO_NUM_27
+#define pin_ctrl1_ch1 GPIO_NUM_26
 
 // counter threshold
 #define threshold_0 36
 #define threshold_1 72
-#define high_limit 3600
+#define high_limit 32767
 
 // create counter objects
 PulseCounter pc0, pc1;
@@ -118,7 +121,7 @@ void setup()
   Serial.begin(115200);
   Serial.println("Conteggio up/down encoders incrementali");
   Serial.println("  Encoder #0 su pin GPIO_16 e pin GPIO_17");
-  Serial.println("  Encoder #1 su pin GPIO_14 e pin GPIO_12");
+  Serial.println("  Encoder #1 su pin GPIO_26 e pin GPIO_27");
   pinMode(pin_led, OUTPUT);
 
   pinMode(pin_sig0_ch0, INPUT_PULLUP);
@@ -136,21 +139,24 @@ void setup()
   pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0, pin_sig0_ch1, pin_ctrl0_ch1);
   // pc0.initialise(pin_sig0_ch0, pin_ctrl0_ch0);
   //  initialise counter unit 0, channel 0 with signal input GPIO pin and control signal input pin
-  pc1.initialise(pin_sig1_ch0, pin_ctrl1_ch0);
+  //pc1.initialise(pin_sig1_ch0, pin_ctrl1_ch0);
+  pc1.initialise(pin_sig1_ch0, pin_ctrl1_ch0, pin_sig1_ch1, pin_ctrl1_ch1);
 
   // count up on negative edges when ctrl is H,
   // count down on negative edges when ctrl is L,
   // count down on positive edges when ctrl is H,
   // count up on positive edges when ctrl is L
   // pc0.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+  //pc0.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_DEC, PCNT_MODE_REVERSE, PCNT_MODE_KEEP);
   pc0.set_mode(PCNT_CHANNEL_0, PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
   pc0.set_mode(PCNT_CHANNEL_1, PCNT_COUNT_INC, PCNT_COUNT_DEC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
 
-  pc1.set_mode(PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+  pc1.set_mode(PCNT_CHANNEL_0, PCNT_COUNT_INC, PCNT_COUNT_DEC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+  pc1.set_mode(PCNT_CHANNEL_1, PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
 
   // set glich filter to ignore pulses less than 1000 x 2.5ns
-  pc0.set_filter_value(1000);
-  pc1.set_filter_value(1000);
+  pc0.set_filter_value(2000);
+  pc1.set_filter_value(2000);
 
   // set and enable threshold 0 and 1 watch points - these will trigger an interrupt.
   // the event can be disabled and enabled using pc0.event_disable(PCNT_EVT_THRES_0) or pc0.event_enable(PCNT_EVT_THRES_0)
